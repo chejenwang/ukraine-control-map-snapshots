@@ -1,0 +1,29 @@
+name: Daily KML Snapshot
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 每天 00:30 UTC
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch KML
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          mkdir -p data/raw_kml
+          curl -L \
+            "https://www.google.com/maps/d/u/1/kml?forcekml=1&mid=1thW9kqnDOaS2lAepLhLdzSX8Ur9Sc4k" \
+            -o data/raw_kml/${DATE}.kml
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "kml-bot"
+          git config user.email "bot@example.com"
+          git add data/raw_kml
+          git commit -m "Snapshot ${DATE}" || echo "No change"
+          git push
